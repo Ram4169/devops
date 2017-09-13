@@ -1,4 +1,5 @@
-﻿///////////////////////////////////////////////////////////////////////////////
+﻿#tool "nuget:?package=xunit.runner.console"
+///////////////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -9,8 +10,15 @@ var configuration = Argument("configuration", "Release");
 ///////////////////////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES
 ///////////////////////////////////////////////////////////////////////////////
+var solutionPath = File("../DevOpsDemo.sln");
+var solution = ParseSolution(solutionPath);
+var projects = solution.Projects;
+var projectPaths = projects.Select(p => p.Path.GetDirectory());
+var artifacts = "./dist/";
+var publishingError = false;
 
-var solutionPath = File("./DevOpsDemo.sln");
+//BuildParameters parameters = BuildParameters.GetParameters(Context, BuildSystem);
+
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
 ///////////////////////////////////////////////////////////////////////////////
@@ -33,27 +41,48 @@ Teardown(ctx =>
 
 Task("Clean")
 .Does(() => {	
-	Information("Hello Clean!");
+	// Clean solution directories.
+    foreach(var path in projectPaths)
+    {
+        Information("Cleaning {0}", path);
+        CleanDirectories(path + "/**/bin/" + configuration);
+        CleanDirectories(path + "/**/obj/" + configuration);
+    }
+
+    Information("Cleaning common files...");
+    CleanDirectory(artifacts);
 });
 Task("Restore")
 .IsDependentOn("Clean")
 .Does(() => {	
-	Information("Hello Restore!");
+	// Restore all NuGet packages.
+    Information("Restoring solution...");
+    NuGetRestore(solutionPath);
 });
 Task("Build")
 .IsDependentOn("Restore")
 .Does(() => {	
-	Information("Hello Build!");
+	Information("Building solution...");
+    MSBuild(solutionPath, settings =>
+        settings.SetPlatformTarget(PlatformTarget.MSIL)
+            .SetMSBuildPlatform(MSBuildPlatform.x86)
+            .UseToolVersion(MSBuildToolVersion.VS2017)
+            .WithProperty("TreatWarningsAsErrors","true")
+            .SetVerbosity(Verbosity.Quiet)
+            .WithTarget("Build")
+            .SetConfiguration(configuration));
 });
 Task("Run-Unit-Tests")
 .IsDependentOn("Build")
 .Does(() => {	
-	Information("Hello Run-Unit-Tests!");
+	Information("Running unit tests...");
+	XUnit2("./Cake.AddinTests1/bin/Debug/Cake.AddinTests1.dll");
 });
 Task("Run-Integration-Test")
 .IsDependentOn("Run-Unit-Tests")
 .Does(() => {	
-	Information("Hello Run integration test!");
+	Information("Running integration test!");
+	
 });
 Task("Generate-Code-Coverage")
 .IsDependentOn("Run-Integration-Test")
@@ -67,7 +96,5 @@ Task("Generate-Artifacts")
 });
 Task("Default")
 .IsDependentOn("Generate-Artifacts");
-//.Does(() => {
-//	Information("Hello Cake!");
-//});
+
 RunTarget(target);
