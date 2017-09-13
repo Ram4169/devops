@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace DevOpsDemo
 {
@@ -56,7 +60,7 @@ namespace DevOpsDemo
                 throw new ArgumentOutOfRangeException("amount");
             }
 
-            m_balance += amount; // intentionally incorrect code  
+            m_balance -= amount; // intentionally incorrect code  
         }
     }
 }

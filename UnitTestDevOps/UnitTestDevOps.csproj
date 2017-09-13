@@ -56,7 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DevOpsDemo\DevOpsDemo.csproj">
-      <Project>{d5f176bf-e558-437a-90b4-9d5b43ec6b3f}</Project>
+      <Project>{41f85621-2fbc-421c-b2a0-a3e19f3d2ef9}</Project>
       <Name>DevOpsDemo</Name>
     </ProjectReference>
   </ItemGroup>
